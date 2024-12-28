@@ -64,19 +64,18 @@ public class TransactionServiceImpl implements TransactionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with ID: " + request.getCategoryId()));
 
 
-        transaction.setDate(request.getDate());
-        transaction.setAmount(request.getAmount());
-        transaction.setType(TransactionType.valueOf(request.getType()));
-        transaction.setCategory(category);
-        transaction.setDescription(request.getDescription());
-
-
         double previousBalance = transactionRepository.findLastBalanceByUserId(transaction.getUser().getId()).orElse(0.0);
 
 
         double adjustedBalance = transaction.getType() == TransactionType.INCOME
                 ? previousBalance - transaction.getAmount()
                 : previousBalance + transaction.getAmount();
+
+        transaction.setDate(request.getDate());
+        transaction.setAmount(request.getAmount());
+        transaction.setType(TransactionType.valueOf(request.getType()));
+        transaction.setCategory(category);
+        transaction.setDescription(request.getDescription());
 
         transaction.setBalance(
                 request.getType().equals("INCOME")
