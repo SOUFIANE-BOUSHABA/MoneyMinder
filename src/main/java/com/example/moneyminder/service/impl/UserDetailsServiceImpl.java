@@ -6,11 +6,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
-import java.util.stream.Collectors;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
@@ -26,10 +25,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
-                user.getRoles().stream()
-                        .flatMap(role -> role.getPermissions().stream())
-                        .map(permission -> new SimpleGrantedAuthority(permission.getName()))
-                        .collect(Collectors.toSet())
+                Collections.singleton(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName()))
         );
     }
 }

@@ -1,9 +1,8 @@
 package com.example.moneyminder.entity;
 
-
 import lombok.*;
 import jakarta.persistence.*;
-import java.util.*;
+import java.util.Date;
 
 @Entity
 @Getter
@@ -26,13 +25,9 @@ public class User {
     private String firstName;
     private String lastName;
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles = new HashSet<>();
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
 
     private boolean isActive;
     private Date createdAt;
