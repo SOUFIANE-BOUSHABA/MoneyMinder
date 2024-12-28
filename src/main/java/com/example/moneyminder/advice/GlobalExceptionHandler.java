@@ -1,5 +1,6 @@
 package com.example.moneyminder.advice;
 
+import com.example.moneyminder.exception.AccessDeniedException;
 import com.example.moneyminder.exception.CustomException;
 import com.example.moneyminder.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -17,5 +18,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<?> handleCustomException(CustomException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<?> handleAccessDeniedException(AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
     }
 }
