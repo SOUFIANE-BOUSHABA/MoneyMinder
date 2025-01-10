@@ -6,6 +6,7 @@ import java.util.Date;
 
 @Data
 public class TransactionRequest {
+
     @NotNull
     private Date date;
 
@@ -18,7 +19,8 @@ public class TransactionRequest {
     @NotNull
     private Long categoryId;
 
-
+    @NotNull
+    private Long accountId;
 
     private String description;
 }

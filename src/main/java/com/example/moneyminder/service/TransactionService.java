@@ -15,19 +15,12 @@ public interface TransactionService {
 
     List<TransactionVM> getAllTransactions();
 
+    List<TransactionVM> getTransactionsByAccountId(Long accountId);
     List<TransactionVM> getTransactionsByUserId(Long userId);
 
     void deleteTransaction(Long id);
 
-    List<TransactionVM> getTransactionsForCurrentUserOrAdmin();
-
     void checkTransactionOwnership(Long transactionId);
-
-    void checkTransactionAccess(Long transactionId);
-
-    void checkUserAccess(Long userId);
-
-    Double calculateCashFlow(Long userId);
 
     User getCurrentUser();
 }

@@ -12,7 +12,6 @@ public interface TransactionMapper {
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "userEmail", source = "user.email")
     @Mapping(target = "categoryName", source = "category.name")
-    @Mapping(target = "balance", source = "balance")
     TransactionVM toVM(Transaction transaction);
 
     @Mapping(target = "id", ignore = true)

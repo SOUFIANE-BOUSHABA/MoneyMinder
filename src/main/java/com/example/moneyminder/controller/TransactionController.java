@@ -2,7 +2,6 @@ package com.example.moneyminder.controller;
 
 import com.example.moneyminder.DTOs.TransactionRequest;
 import com.example.moneyminder.VMs.TransactionVM;
-import com.example.moneyminder.entity.User;
 import com.example.moneyminder.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -40,20 +39,13 @@ public class TransactionController {
         return ResponseEntity.ok(transactionService.getTransactionById(id));
     }
 
+    @GetMapping("/account/{accountId}")
+    public ResponseEntity<List<TransactionVM>> getTransactionsByAccountId(@PathVariable Long accountId) {
+        return ResponseEntity.ok(transactionService.getTransactionsByAccountId(accountId));
+    }
+
     @GetMapping
     public ResponseEntity<List<TransactionVM>> getAllTransactions() {
-        return ResponseEntity.ok(transactionService.getTransactionsForCurrentUserOrAdmin());
-    }
-
-    @GetMapping("/user/cashflow")
-    public ResponseEntity<Double> getCashFlowForCurrentUser() {
-        User currentUser = transactionService.getCurrentUser();
-        double cashFlow = transactionService.calculateCashFlow(currentUser.getId());
-        return ResponseEntity.ok(cashFlow);
-    }
-
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<TransactionVM>> getTransactionsByUserId(@PathVariable Long userId) {
-        return ResponseEntity.ok(transactionService.getTransactionsByUserId(userId));
+        return ResponseEntity.ok(transactionService.getAllTransactions());
     }
 }

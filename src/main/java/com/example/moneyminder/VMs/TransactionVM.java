@@ -15,6 +15,4 @@ public class TransactionVM {
     private String categoryName;
     private String description;
 
-
-    private Double balance;
 }

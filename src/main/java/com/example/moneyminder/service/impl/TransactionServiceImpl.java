@@ -2,12 +2,15 @@ package com.example.moneyminder.service.impl;
 
 import com.example.moneyminder.DTOs.TransactionRequest;
 import com.example.moneyminder.VMs.TransactionVM;
+import com.example.moneyminder.entity.Account;
+import com.example.moneyminder.entity.Category;
 import com.example.moneyminder.entity.Transaction;
 import com.example.moneyminder.entity.User;
 import com.example.moneyminder.entity.enums.TransactionType;
 import com.example.moneyminder.exception.AccessDeniedException;
 import com.example.moneyminder.exception.ResourceNotFoundException;
 import com.example.moneyminder.mapper.TransactionMapper;
+import com.example.moneyminder.repository.AccountRepository;
 import com.example.moneyminder.repository.CategoryRepository;
 import com.example.moneyminder.repository.TransactionRepository;
 import com.example.moneyminder.repository.UserRepository;
@@ -24,72 +27,94 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
 
-
     private final TransactionRepository transactionRepository;
     private final CategoryRepository categoryRepository;
     private final TransactionMapper transactionMapper;
     private final UserRepository userRepository;
-
+    private final AccountRepository accountRepository;
 
     @Override
     public TransactionVM createTransaction(TransactionRequest request) {
         User currentUser = getCurrentUser();
 
-        var category = categoryRepository.findById(request.getCategoryId())
+        Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with ID: " + request.getCategoryId()));
+
+        Account account = accountRepository.findById(request.getAccountId())
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found with ID: " + request.getAccountId()));
 
         Transaction transaction = transactionMapper.toEntity(request);
         transaction.setCategory(category);
         transaction.setUser(currentUser);
+        transaction.setAccount(account);
 
-
-        double previousBalance = transactionRepository.findLastBalanceByUserId(currentUser.getId()).orElse(0.0);
-        transaction.setBalance(
-                request.getType().equals("INCOME")
-                        ? previousBalance + request.getAmount()
-                        : previousBalance - request.getAmount()
-        );
+        // Adjust account balance
+        if (TransactionType.valueOf(request.getType()) == TransactionType.INCOME) {
+            account.setBalance(account.getBalance() + request.getAmount());
+        } else {
+            account.setBalance(account.getBalance() - request.getAmount());
+        }
+        accountRepository.save(account);
 
         return transactionMapper.toVM(transactionRepository.save(transaction));
     }
 
     @Override
     public TransactionVM updateTransaction(Long id, TransactionRequest request) {
+        Transaction existingTransaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found with ID: " + id));
+
+        Account account = existingTransaction.getAccount();
+
+        // Revert previous balance adjustments
+        if (existingTransaction.getType() == TransactionType.INCOME) {
+            account.setBalance(account.getBalance() - existingTransaction.getAmount());
+        } else {
+            account.setBalance(account.getBalance() + existingTransaction.getAmount());
+        }
+
+        Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with ID: " + request.getCategoryId()));
+
+        existingTransaction.setDate(request.getDate());
+        existingTransaction.setAmount(request.getAmount());
+        existingTransaction.setType(TransactionType.valueOf(request.getType()));
+        existingTransaction.setCategory(category);
+        existingTransaction.setDescription(request.getDescription());
+
+        // Adjust account balance with new transaction data
+        if (TransactionType.valueOf(request.getType()) == TransactionType.INCOME) {
+            account.setBalance(account.getBalance() + request.getAmount());
+        } else {
+            account.setBalance(account.getBalance() - request.getAmount());
+        }
+        accountRepository.save(account);
+
+        return transactionMapper.toVM(transactionRepository.save(existingTransaction));
+    }
+
+    @Override
+    public void deleteTransaction(Long id) {
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction not found with ID: " + id));
 
         checkTransactionOwnership(id);
 
-        var category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found with ID: " + request.getCategoryId()));
+        Account account = transaction.getAccount();
 
+        // Revert balance adjustments
+        if (transaction.getType() == TransactionType.INCOME) {
+            account.setBalance(account.getBalance() - transaction.getAmount());
+        } else {
+            account.setBalance(account.getBalance() + transaction.getAmount());
+        }
+        accountRepository.save(account);
 
-        double previousBalance = transactionRepository.findLastBalanceByUserId(transaction.getUser().getId()).orElse(0.0);
-
-
-        double adjustedBalance = transaction.getType() == TransactionType.INCOME
-                ? previousBalance - transaction.getAmount()
-                : previousBalance + transaction.getAmount();
-
-        transaction.setDate(request.getDate());
-        transaction.setAmount(request.getAmount());
-        transaction.setType(TransactionType.valueOf(request.getType()));
-        transaction.setCategory(category);
-        transaction.setDescription(request.getDescription());
-
-        transaction.setBalance(
-                request.getType().equals("INCOME")
-                        ? adjustedBalance + request.getAmount()
-                        : adjustedBalance - request.getAmount()
-        );
-
-        return transactionMapper.toVM(transactionRepository.save(transaction));
+        transactionRepository.delete(transaction);
     }
-
 
     @Override
     public TransactionVM getTransactionById(Long id) {
-        checkTransactionAccess(id);
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction not found with ID: " + id));
         return transactionMapper.toVM(transaction);
@@ -103,41 +128,17 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public List<TransactionVM> getTransactionsByUserId(Long userId) {
-        checkUserAccess(userId);
-        return transactionRepository.findByUserId(userId).stream()
+    public List<TransactionVM> getTransactionsByAccountId(Long accountId) {
+        return transactionRepository.findByAccountId(accountId).stream()
                 .map(transactionMapper::toVM)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public void deleteTransaction(Long id) {
-        checkTransactionOwnership(id);
-        transactionRepository.deleteById(id);
-    }
-
-    @Override
-    public List<TransactionVM> getTransactionsForCurrentUserOrAdmin() {
-        User currentUser = getCurrentUser();
-        if (currentUser.getRole().getName().equals("ROLE_ADMIN")) {
-            return getAllTransactions();
-        } else {
-            return getTransactionsByUserId(currentUser.getId());
-        }
-    }
-
-    @Override
-    public Double calculateCashFlow(Long userId) {
-        checkUserAccess(userId);
-        List<Transaction> transactions = transactionRepository.findByUserId(userId);
-
-        return transactions.stream()
-                .mapToDouble(transaction ->
-                        transaction.getType() == TransactionType.INCOME
-                                ? transaction.getAmount()
-                                : -transaction.getAmount()
-                )
-                .sum();
+    public List<TransactionVM> getTransactionsByUserId(Long userId) {
+        return transactionRepository.findByUserId(userId).stream()
+                .map(transactionMapper::toVM)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -146,30 +147,8 @@ public class TransactionServiceImpl implements TransactionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction not found with ID: " + transactionId));
 
         User currentUser = getCurrentUser();
-        if (!transaction.getUser().getId().equals(currentUser.getId()) &&
-                !currentUser.getRole().getName().equals("ROLE_ADMIN")) {
-            throw new AccessDeniedException("You are not authorized to modify this transaction.");
-        }
-    }
-
-    @Override
-    public void checkTransactionAccess(Long transactionId) {
-        Transaction transaction = transactionRepository.findById(transactionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found with ID: " + transactionId));
-
-        User currentUser = getCurrentUser();
-        if (!transaction.getUser().getId().equals(currentUser.getId()) &&
-                !currentUser.getRole().getName().equals("ROLE_ADMIN")) {
-            throw new AccessDeniedException("You are not authorized to view this transaction.");
-        }
-    }
-
-    @Override
-    public void checkUserAccess(Long userId) {
-        User currentUser = getCurrentUser();
-        if (!currentUser.getId().equals(userId) &&
-                !currentUser.getRole().getName().equals("ROLE_ADMIN")) {
-            throw new AccessDeniedException("You are not authorized to view this user's transactions.");
+        if (!transaction.getUser().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("You are not authorized to modify or delete this transaction.");
         }
     }
 
