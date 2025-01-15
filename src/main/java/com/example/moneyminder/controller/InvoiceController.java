@@ -2,6 +2,7 @@ package com.example.moneyminder.controller;
 
 import com.example.moneyminder.DTOs.InvoiceRequest;
 import com.example.moneyminder.VMs.InvoiceVM;
+import com.example.moneyminder.entity.enums.InvoiceStatus;
 import com.example.moneyminder.service.InvoiceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -41,4 +42,13 @@ public class InvoiceController {
         invoiceService.deleteInvoice(id);
         return ResponseEntity.noContent().build();
     }
+
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<InvoiceVM> updateInvoiceStatus(
+            @PathVariable Long id,
+            @RequestParam InvoiceStatus status) {
+        return ResponseEntity.ok(invoiceService.updateInvoiceStatus(id, status));
+    }
+
 }

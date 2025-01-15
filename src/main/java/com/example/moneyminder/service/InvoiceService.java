@@ -2,6 +2,7 @@ package com.example.moneyminder.service;
 
 import com.example.moneyminder.DTOs.InvoiceRequest;
 import com.example.moneyminder.VMs.InvoiceVM;
+import com.example.moneyminder.entity.enums.InvoiceStatus;
 
 import java.util.List;
 
@@ -15,4 +16,7 @@ public interface InvoiceService {
     List<InvoiceVM> getAllInvoices();
 
     void deleteInvoice(Long id);
+
+    InvoiceVM updateInvoiceStatus(Long id, InvoiceStatus status);
+
 }

@@ -10,6 +10,7 @@ import com.example.moneyminder.mapper.InvoiceMapper;
 import com.example.moneyminder.repository.InvoiceRepository;
 import com.example.moneyminder.repository.UserRepository;
 import com.example.moneyminder.service.InvoiceService;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,6 +26,8 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final InvoiceMapper invoiceMapper;
     private final UserRepository userRepository;
+    private final EmailService emailService;
+
 
     public  User getCurrentUser() {
         String email = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
@@ -41,7 +44,20 @@ public class InvoiceServiceImpl implements InvoiceService {
         Invoice invoice = invoiceMapper.toEntity(request);
         invoice.setUser(currentUser);
         invoice.setStatus(InvoiceStatus.PENDING);
-        return invoiceMapper.toVM(invoiceRepository.save(invoice));
+
+        Invoice savedInvoice = invoiceRepository.save(invoice);
+
+
+        String subject = "Invoice #" + savedInvoice.getInvoiceNumber();
+        String text = generateInvoiceEmailContent(savedInvoice);
+        try {
+            emailService.sendEmail(currentUser.getEmail(), subject, text);
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        }
+
+
+        return invoiceMapper.toVM(savedInvoice);
     }
 
     @Override
@@ -75,4 +91,52 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice not found with ID: " + id));
         invoiceRepository.delete(invoice);
     }
+
+
+
+    @Override
+    public InvoiceVM updateInvoiceStatus(Long id, InvoiceStatus status) {
+        Invoice invoice = invoiceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Invoice not found with ID: " + id));
+        invoice.setStatus(status);
+        return invoiceMapper.toVM(invoiceRepository.save(invoice));
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private String generateInvoiceEmailContent(Invoice invoice) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<html>")
+                .append("<body style='font-family: Arial, sans-serif;'>")
+                .append("<p>Dear <b>").append(invoice.getUser().getFirstName()).append(" ").append(invoice.getUser().getLastName()).append("</b>,</p>")
+                .append("<p>Here are the details of your invoice:</p>")
+                .append("<p>--------------------------------------------------</p>")
+                .append("<p><b>Invoice Number:</b> <span style='color: red;'>").append(invoice.getInvoiceNumber()).append("</span></p>")
+                .append("<p><b>Issue Date:</b> <span style='color: red;'>").append(invoice.getIssueDate()).append("</span></p>")
+                .append("<p><b>Total Amount:</b> <span style='color: red;'>$").append(invoice.getTotalAmount()).append("</span></p>")
+                .append("<p><b>Status:</b> <span style='color: red;'>").append(invoice.getStatus()).append("</span></p>")
+                .append("<p>--------------------------------------------------</p>")
+                .append("<p>Thank you for using <b><span style='color: blue;'>MoneyMinder</span></b>. If you have any questions, please contact us.</p>")
+                .append("<p>Best regards,</p>")
+                .append("<p><b><span style='color: blue;'>MoneyMinder Team</span></b></p>")
+                .append("</body>")
+                .append("</html>");
+        return sb.toString();
+    }
+
+
+
+
+
 }

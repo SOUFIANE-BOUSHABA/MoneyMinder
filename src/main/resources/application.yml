@@ -20,6 +20,18 @@ spring:
         format_sql: true
 
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: soufianboushaba12@gmail.com
+    password: rbcf wuhr ejpx nfhi
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 
 logging:
   level:
