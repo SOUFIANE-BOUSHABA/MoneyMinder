@@ -2,6 +2,7 @@ package com.example.moneyminder.service.impl;
 
 import com.example.moneyminder.DTOs.QuoteRequest;
 import com.example.moneyminder.VMs.QuoteVM;
+import com.example.moneyminder.entity.Invoice;
 import com.example.moneyminder.entity.Quote;
 import com.example.moneyminder.entity.User;
 import com.example.moneyminder.entity.enums.QuoteStatus;
@@ -10,6 +11,7 @@ import com.example.moneyminder.mapper.QuoteMapper;
 import com.example.moneyminder.repository.QuoteRepository;
 import com.example.moneyminder.repository.UserRepository;
 import com.example.moneyminder.service.QuoteService;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,9 +28,10 @@ public class QuoteServiceImpl implements QuoteService {
     private final QuoteRepository quoteRepository;
     private final QuoteMapper quoteMapper;
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
 
-    public  User getCurrentUser() {
+    public User getCurrentUser() {
         String email = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
 
         User currentUser = userRepository.findByEmail(email)
@@ -37,14 +40,27 @@ public class QuoteServiceImpl implements QuoteService {
     }
 
 
-
     @Override
     public QuoteVM createQuote(QuoteRequest request) {
         User currentUser = getCurrentUser();
         Quote quote = quoteMapper.toEntity(request);
         quote.setUser(currentUser);
         quote.setStatus(QuoteStatus.DRAFT);
-        return quoteMapper.toVM(quoteRepository.save(quote));
+
+        Quote savedQuote = quoteRepository.save(quote);
+
+
+        String subject = "Quote #" + savedQuote.getQuoteNumber();
+        String text = generateQuoteEmailContent(savedQuote);
+        try {
+            emailService.sendEmail(currentUser.getEmail(), subject, text);
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        }
+
+
+        return quoteMapper.toVM(savedQuote);
+
     }
 
     @Override
@@ -78,4 +94,37 @@ public class QuoteServiceImpl implements QuoteService {
                 .orElseThrow(() -> new ResourceNotFoundException("Quote not found with ID: " + id));
         quoteRepository.delete(quote);
     }
+
+
+
+
+
+
+
+
+
+
+
+
+      private String generateQuoteEmailContent(Quote quote) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<html>")
+                .append("<body style='font-family: Arial, sans-serif;'>")
+                .append("<p>Dear <b>").append(quote.getUser().getFirstName()).append(" ").append(quote.getUser().getLastName()).append("</b>,</p>")
+                .append("<p>Here are the details of your quote:</p>")
+                .append("<p>--------------------------------------------------</p>")
+                .append("<p><b>Quote Number:</b> <span style='color: red;'>").append(quote.getQuoteNumber()).append("</span></p>")
+                .append("<p><b>Issue Date:</b> <span style='color: red;'>").append(quote.getIssueDate()).append("</span></p>")
+                .append("<p><b>Total Amount:</b> <span style='color: red;'>$").append(quote.getTotalAmount()).append("</span></p>")
+                .append("<p><b>Status:</b> <span style='color: red;'>").append(quote.getStatus()).append("</span></p>")
+                .append("<p>--------------------------------------------------</p>")
+                .append("<p>Thank you for using <b><span style='color: blue;'>MoneyMinder</span></b>. If you have any questions, please contact us.</p>")
+                .append("<p>Best regards,</p>")
+                .append("<p><b><span style='color: blue;'>MoneyMinder Team</span></b></p>")
+                .append("</body>")
+                .append("</html>");
+        return sb.toString();
+     }
+
+
 }
