@@ -17,7 +17,6 @@ public class PdfGenerator {
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
 
-
     public static byte[] generateInvoicePdf(Invoice invoice) {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             PdfWriter writer = new PdfWriter(outputStream);

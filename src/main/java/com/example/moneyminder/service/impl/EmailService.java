@@ -2,6 +2,7 @@ package com.example.moneyminder.service.impl;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.util.ByteArrayDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -19,7 +20,21 @@ public class EmailService {
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
         helper.setTo(to);
         helper.setSubject(subject);
-        helper.setText(text, true); // Set to true to enable HTML
+        helper.setText(text, true);
+
+        mailSender.send(message);
+    }
+
+
+
+    public void sendEmailWithAttachment(String to, String subject, String text, byte[] attachment, String fileName) throws MessagingException {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+        helper.setTo(to);
+        helper.setSubject(subject);
+        helper.setText(text);
+        helper.addAttachment(fileName, new ByteArrayDataSource(attachment, "application/pdf"));
 
         mailSender.send(message);
     }

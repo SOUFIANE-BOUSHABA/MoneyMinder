@@ -139,11 +139,23 @@ public class InvoiceServiceImpl implements InvoiceService {
 
 
     @Override
-    public byte[] generateInvoicePdf(Long id) {
+    public byte[] generateAndSendInvoicePdf(Long id) {
         Invoice invoice = invoiceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice not found with ID: " + id));
-        return PdfGenerator.generateInvoicePdf(invoice);
+
+        byte[] pdfContent = PdfGenerator.generateInvoicePdf(invoice);
+
+        String subject = "Your Invoice #" + invoice.getInvoiceNumber();
+        String text = "Dear " + invoice.getUser().getFirstName() + ",\n\nPlease find your invoice attached.\n\nBest regards,\nMoneyMinder Team";
+        try {
+            emailService.sendEmailWithAttachment(invoice.getUser().getEmail(), subject, text, pdfContent, "invoice_" + id + ".pdf");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to send email", e);
+        }
+
+        return pdfContent;
     }
+
 
 
 

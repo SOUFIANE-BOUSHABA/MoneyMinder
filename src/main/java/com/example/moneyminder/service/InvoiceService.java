@@ -19,6 +19,6 @@ public interface InvoiceService {
 
     InvoiceVM updateInvoiceStatus(Long id, InvoiceStatus status);
 
-    byte[] generateInvoicePdf(Long id);
+    byte[] generateAndSendInvoicePdf(Long id);
 
 }

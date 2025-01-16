@@ -54,7 +54,7 @@ public class InvoiceController {
 
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> getInvoicePdf(@PathVariable Long id) {
-        byte[] pdfContent = invoiceService.generateInvoicePdf(id);
+        byte[] pdfContent = invoiceService.generateAndSendInvoicePdf(id);
 
         return ResponseEntity.ok()
                 .header("Content-Type", "application/pdf")
