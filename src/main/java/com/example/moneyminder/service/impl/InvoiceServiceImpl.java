@@ -10,6 +10,7 @@ import com.example.moneyminder.mapper.InvoiceMapper;
 import com.example.moneyminder.repository.InvoiceRepository;
 import com.example.moneyminder.repository.UserRepository;
 import com.example.moneyminder.service.InvoiceService;
+import com.example.moneyminder.utils.PdfGenerator;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -133,6 +134,15 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .append("</body>")
                 .append("</html>");
         return sb.toString();
+    }
+
+
+
+    @Override
+    public byte[] generateInvoicePdf(Long id) {
+        Invoice invoice = invoiceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Invoice not found with ID: " + id));
+        return PdfGenerator.generateInvoicePdf(invoice);
     }
 
 

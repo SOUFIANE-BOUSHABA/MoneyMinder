@@ -51,4 +51,17 @@ public class InvoiceController {
         return ResponseEntity.ok(invoiceService.updateInvoiceStatus(id, status));
     }
 
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> getInvoicePdf(@PathVariable Long id) {
+        byte[] pdfContent = invoiceService.generateInvoicePdf(id);
+
+        return ResponseEntity.ok()
+                .header("Content-Type", "application/pdf")
+                .header("Content-Disposition", "attachment; filename=invoice_" + id + ".pdf")
+                .body(pdfContent);
+    }
+
+
+
 }
