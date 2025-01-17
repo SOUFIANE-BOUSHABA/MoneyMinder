@@ -41,4 +41,17 @@ public class QuoteController {
         quoteService.deleteQuote(id);
         return ResponseEntity.noContent().build();
     }
+
+
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> generateAndSendQuotePdf(@PathVariable Long id) {
+        byte[] pdfContent = quoteService.generateAndSendQuotePdf(id);
+
+        return ResponseEntity.ok()
+                .header("Content-Type", "application/pdf")
+                .header("Content-Disposition", "attachment; filename=quote_" + id + ".pdf")
+                .body(pdfContent);
+    }
+
 }

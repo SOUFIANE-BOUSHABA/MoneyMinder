@@ -1,6 +1,7 @@
 package com.example.moneyminder.utils;
 
 import com.example.moneyminder.entity.Invoice;
+import com.example.moneyminder.entity.Quote;
 import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
@@ -52,4 +53,40 @@ public class PdfGenerator {
             throw new RuntimeException("Error generating PDF", e);
         }
     }
+
+
+
+
+
+    public static byte[] generateQuotePdf(Quote quote) {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            PdfWriter writer = new PdfWriter(outputStream);
+            PdfDocument pdfDoc = new PdfDocument(writer);
+            Document document = new Document(pdfDoc);
+
+            document.add(new Paragraph("Quote Details")
+                    .setFontSize(18)
+                    .setBold());
+
+            Table table = new Table(2);
+            table.addCell(new Cell().add(new Paragraph("Quote Number:")));
+            table.addCell(new Cell().add(new Paragraph(quote.getQuoteNumber())));
+            table.addCell(new Cell().add(new Paragraph("Issue Date:")));
+            table.addCell(new Cell().add(new Paragraph(dateFormat.format(quote.getIssueDate()))));
+            table.addCell(new Cell().add(new Paragraph("Total Amount:")));
+            table.addCell(new Cell().add(new Paragraph("$" + quote.getTotalAmount())));
+            table.addCell(new Cell().add(new Paragraph("Status:")));
+            table.addCell(new Cell().add(new Paragraph(quote.getStatus().toString())));
+
+            document.add(table);
+
+            document.add(new Paragraph("\nThank you for using MoneyMinder."));
+
+            document.close();
+            return outputStream.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Error generating PDF", e);
+        }
+    }
+
 }

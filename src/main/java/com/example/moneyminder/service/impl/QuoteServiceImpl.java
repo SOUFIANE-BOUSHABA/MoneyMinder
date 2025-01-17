@@ -18,6 +18,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import com.example.moneyminder.utils.PdfGenerator;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -125,6 +127,30 @@ public class QuoteServiceImpl implements QuoteService {
                 .append("</html>");
         return sb.toString();
      }
+
+
+
+    @Override
+    public byte[] generateAndSendQuotePdf(Long id) {
+        Quote quote = quoteRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Quote not found with ID: " + id));
+
+        byte[] pdfContent = PdfGenerator.generateQuotePdf(quote);
+
+        String subject = "Your Quote #" + quote.getQuoteNumber();
+        String text = "Dear " + quote.getUser().getFirstName() + ",\n\nPlease find your quote attached.\n\nBest regards,\nMoneyMinder Team";
+
+        try {
+            emailService.sendEmailWithAttachment(quote.getUser().getEmail(), subject, text, pdfContent, "quote_" + id + ".pdf");
+        } catch (MessagingException e) {
+            throw new RuntimeException("Failed to send email", e);
+        }
+
+        return pdfContent;
+    }
+
+
+
 
 
 }

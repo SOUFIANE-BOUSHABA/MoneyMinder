@@ -15,4 +15,6 @@ public interface QuoteService {
     List<QuoteVM> getAllQuotes();
 
     void deleteQuote(Long id);
+
+    byte[] generateAndSendQuotePdf(Long id);
 }
