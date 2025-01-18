@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import com.example.moneyminder.entity.Payment;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -82,8 +83,21 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     public List<InvoiceVM> getAllInvoices() {
         return invoiceRepository.findAll().stream()
-                .map(invoiceMapper::toVM)
+                .map(this::mapInvoiceWithPaymentPercentage)
                 .collect(Collectors.toList());
+    }
+
+    private InvoiceVM mapInvoiceWithPaymentPercentage(Invoice invoice) {
+        InvoiceVM invoiceVM = invoiceMapper.toVM(invoice);
+
+        double totalPaid = invoice.getPayments().stream()
+                .mapToDouble(Payment::getAmount)
+                .sum();
+
+        double paymentPercentage = (totalPaid / invoice.getTotalAmount()) * 100;
+        invoiceVM.setPaymentPercentage(paymentPercentage);
+
+        return invoiceVM;
     }
 
     @Override

@@ -17,4 +17,5 @@ public class QuoteVM {
     private Double totalAmount;
     private QuoteStatus status;
     private Long userId;
+    private Double paymentPercentage;
 }

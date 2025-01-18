@@ -17,6 +17,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import com.example.moneyminder.entity.Payment;
 
 import com.example.moneyminder.utils.PdfGenerator;
 
@@ -83,12 +84,30 @@ public class QuoteServiceImpl implements QuoteService {
         return quoteMapper.toVM(quote);
     }
 
+
+
     @Override
     public List<QuoteVM> getAllQuotes() {
         return quoteRepository.findAll().stream()
-                .map(quoteMapper::toVM)
+                .map(this::mapQuoteWithPaymentPercentage)
                 .collect(Collectors.toList());
     }
+
+    private QuoteVM mapQuoteWithPaymentPercentage(Quote quote) {
+        QuoteVM quoteVM = quoteMapper.toVM(quote);
+
+        double totalPaid = quote.getPayments().stream()
+                .mapToDouble(Payment::getAmount)
+                .sum();
+
+        double paymentPercentage = (totalPaid / quote.getTotalAmount()) * 100;
+        quoteVM.setPaymentPercentage(paymentPercentage);
+
+        return quoteVM;
+    }
+
+
+
 
     @Override
     public void deleteQuote(Long id) {

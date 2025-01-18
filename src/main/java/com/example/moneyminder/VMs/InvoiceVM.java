@@ -17,4 +17,5 @@ public class InvoiceVM {
     private Double totalAmount;
     private InvoiceStatus status;
     private Long userId;
+    private Double paymentPercentage;
 }
