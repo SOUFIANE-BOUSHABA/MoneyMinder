@@ -47,12 +47,9 @@ public class FinancialReportServiceImpl implements FinancialReportService {
         User currentUser = getCurrentUser();
 
 
-        List<Transaction> transactions = transactionRepository.findAllByUser_IdAndDateBetween(
-                currentUser.getId(), request.getStartDate(), request.getEndDate());
-        List<Invoice> invoices = invoiceRepository.findAllByUser_IdAndIssueDateBetween(
-                currentUser.getId(), request.getStartDate(), request.getEndDate());
-        List<Quote> quotes = quoteRepository.findAllByUser_IdAndIssueDateBetween(
-                currentUser.getId(), request.getStartDate(), request.getEndDate());
+        List<Transaction> transactions = transactionRepository.findAllByUser_IdAndDateBetween(  currentUser.getId(), request.getStartDate(), request.getEndDate());
+        List<Invoice> invoices = invoiceRepository.findAllByUser_IdAndIssueDateBetween(         currentUser.getId(), request.getStartDate(), request.getEndDate());
+        List<Quote> quotes = quoteRepository.findAllByUser_IdAndIssueDateBetween(               currentUser.getId(), request.getStartDate(), request.getEndDate());
 
 
         String reportTitle = request.getReportType() + " Financial Report";
