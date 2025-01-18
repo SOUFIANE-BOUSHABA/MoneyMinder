@@ -97,6 +97,11 @@ public class PdfGenerator {
 
 
 
+
+
+
+
+
     public static byte[] generateFinancialReportPdf(List<Transaction> transactions, List<Invoice> invoices, List<Quote> quotes, FinancialReportRequest request) {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             PdfWriter writer = new PdfWriter(outputStream);
@@ -109,7 +114,7 @@ public class PdfGenerator {
             document.add(new Paragraph("Report Type: " + request.getReportType()));
             document.add(new Paragraph("Date Range: " + dateFormat.format(request.getStartDate()) + " to " + dateFormat.format(request.getEndDate())));
 
-            // Add Transactions Table
+
             document.add(new Paragraph("\nTransactions").setBold());
             Table transactionTable = new Table(3);
             transactionTable.addCell("Date");
@@ -122,7 +127,6 @@ public class PdfGenerator {
             }
             document.add(transactionTable);
 
-            // Add Invoices Table
             document.add(new Paragraph("\nInvoices").setBold());
             Table invoiceTable = new Table(4);
             invoiceTable.addCell("Number");
@@ -137,7 +141,7 @@ public class PdfGenerator {
             }
             document.add(invoiceTable);
 
-            // Add Quotes Table
+
             document.add(new Paragraph("\nQuotes").setBold());
             Table quoteTable = new Table(4);
             quoteTable.addCell("Number");
