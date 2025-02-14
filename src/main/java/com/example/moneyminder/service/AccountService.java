@@ -10,6 +10,6 @@ public interface AccountService {
     AccountVM updateAccount(Long id, AccountRequest request);
     AccountVM getAccountById(Long id);
     List<AccountVM> getAllAccounts();
-    List<AccountVM> getAllAccountsByUserId(Long userId);
+    List<AccountVM> getAllAccountsByUserId();
     void deleteAccount(Long id);
 }

@@ -10,6 +10,8 @@ import com.example.moneyminder.repository.AccountRepository;
 import com.example.moneyminder.repository.UserRepository;
 import com.example.moneyminder.service.AccountService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,10 +25,22 @@ public class AccountServiceImpl implements AccountService {
     private final UserRepository userRepository;
     private final AccountMapper accountMapper;
 
+
+    public User getCurrentUser() {
+        String email = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+    }
+
+    public Long getCurrentUserId() {
+        return getCurrentUser().getId();
+    }
+
     @Override
     public AccountVM createAccount(AccountRequest request) {
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + request.getUserId()));
+        Long userId = getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
         Account account = accountMapper.toEntity(request);
         account.setUser(user);
@@ -60,7 +74,8 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public List<AccountVM> getAllAccountsByUserId(Long userId) {
+    public List<AccountVM> getAllAccountsByUserId() {
+        Long userId = getCurrentUserId();
         return accountRepository.findAllByUserId(userId).stream()
                 .map(accountMapper::toVM)
                 .collect(Collectors.toList());

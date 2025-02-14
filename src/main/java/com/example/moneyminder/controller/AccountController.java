@@ -37,9 +37,9 @@ public class AccountController {
         return ResponseEntity.ok(accountService.getAllAccounts());
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<AccountVM>> getAllAccountsByUserId(Long userId) {
-        return ResponseEntity.ok(accountService.getAllAccountsByUserId(userId));
+    @GetMapping("/user")
+    public ResponseEntity<List<AccountVM>> getAllAccountsByUserId() {
+        return ResponseEntity.ok(accountService.getAllAccountsByUserId());
     }
 
     @DeleteMapping("/{id}")
