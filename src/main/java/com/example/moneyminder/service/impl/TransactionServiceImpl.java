@@ -48,7 +48,7 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setUser(currentUser);
         transaction.setAccount(account);
 
-        // Adjust account balance
+
         if (TransactionType.valueOf(request.getType()) == TransactionType.INCOME) {
             account.setBalance(account.getBalance() + request.getAmount());
         } else {
@@ -66,7 +66,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         Account account = existingTransaction.getAccount();
 
-        // Revert previous balance adjustments
+
         if (existingTransaction.getType() == TransactionType.INCOME) {
             account.setBalance(account.getBalance() - existingTransaction.getAmount());
         } else {
@@ -82,7 +82,7 @@ public class TransactionServiceImpl implements TransactionService {
         existingTransaction.setCategory(category);
         existingTransaction.setDescription(request.getDescription());
 
-        // Adjust account balance with new transaction data
+
         if (TransactionType.valueOf(request.getType()) == TransactionType.INCOME) {
             account.setBalance(account.getBalance() + request.getAmount());
         } else {
@@ -102,7 +102,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         Account account = transaction.getAccount();
 
-        // Revert balance adjustments
+
         if (transaction.getType() == TransactionType.INCOME) {
             account.setBalance(account.getBalance() - transaction.getAmount());
         } else {
@@ -122,7 +122,11 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public List<TransactionVM> getAllTransactions() {
-        return transactionRepository.findAll().stream()
+        User currentUser = getCurrentUser();
+
+        List<Transaction> transactions = transactionRepository.findByUserId(currentUser.getId());
+
+        return transactions.stream()
                 .map(transactionMapper::toVM)
                 .collect(Collectors.toList());
     }
@@ -134,12 +138,12 @@ public class TransactionServiceImpl implements TransactionService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public List<TransactionVM> getTransactionsByUserId(Long userId) {
-        return transactionRepository.findByUserId(userId).stream()
-                .map(transactionMapper::toVM)
-                .collect(Collectors.toList());
-    }
+//    @Override
+//    public List<TransactionVM> getTransactionsByUserId(Long userId) {
+//        return transactionRepository.findByUserId(userId).stream()
+//                .map(transactionMapper::toVM)
+//                .collect(Collectors.toList());
+//    }
 
     @Override
     public void checkTransactionOwnership(Long transactionId) {
@@ -158,4 +162,45 @@ public class TransactionServiceImpl implements TransactionService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
     }
+
+
+
+    @Override
+    public double getTotalIncome() {
+        Long userId = getCurrentUser().getId();
+        return transactionRepository.sumByUserIdAndType(userId, TransactionType.INCOME);
+    }
+
+    @Override
+    public double getTotalExpenses() {
+        Long userId = getCurrentUser().getId();
+        return transactionRepository.sumByUserIdAndType(userId, TransactionType.EXPENSE);
+    }
+
+    @Override
+    public double getIncomeChangePercentage() {
+        Long userId = getCurrentUser().getId();
+        double currentMonthIncome = transactionRepository.sumByUserIdAndType(userId, TransactionType.INCOME);
+        double lastMonthIncome = transactionRepository.sumByUserIdAndTypeLastMonth(userId, TransactionType.INCOME.name());
+
+        if (lastMonthIncome == 0) {
+
+            return currentMonthIncome > 0 ? 100.0 : 0.0;
+        }
+        return ((currentMonthIncome - lastMonthIncome) / lastMonthIncome) * 100.0;
+    }
+
+    @Override
+    public double getExpenseChangePercentage() {
+        Long userId = getCurrentUser().getId();
+        double currentMonthExpense = transactionRepository.sumByUserIdAndType(userId, TransactionType.EXPENSE);
+        double lastMonthExpense = transactionRepository.sumByUserIdAndTypeLastMonth(userId, TransactionType.EXPENSE.name());
+
+        if (lastMonthExpense == 0) {
+            return currentMonthExpense > 0 ? 100.0 : 0.0;
+        }
+
+        return ((currentMonthExpense - lastMonthExpense) / lastMonthExpense) * 100.0;
+    }
+
 }

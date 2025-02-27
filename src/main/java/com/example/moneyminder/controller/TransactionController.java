@@ -48,4 +48,25 @@ public class TransactionController {
     public ResponseEntity<List<TransactionVM>> getAllTransactions() {
         return ResponseEntity.ok(transactionService.getAllTransactions());
     }
+
+
+    @GetMapping("/total-income")
+    public ResponseEntity<Double> getTotalIncome() {
+        return ResponseEntity.ok(transactionService.getTotalIncome());
+    }
+
+    @GetMapping("/total-expenses")
+    public ResponseEntity<Double> getTotalExpenses() {
+        return ResponseEntity.ok(transactionService.getTotalExpenses());
+    }
+
+    @GetMapping("/income-change-percentage")
+    public ResponseEntity<Double> getIncomeChangePercentage() {
+        return ResponseEntity.ok(transactionService.getIncomeChangePercentage());
+    }
+
+    @GetMapping("/expense-change-percentage")
+    public ResponseEntity<Double> getExpenseChangePercentage() {
+        return ResponseEntity.ok(transactionService.getExpenseChangePercentage());
+    }
 }
