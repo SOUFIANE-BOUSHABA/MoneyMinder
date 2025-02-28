@@ -16,6 +16,11 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     List<Invoice> findAllByStatus(InvoiceStatus status);
     List<Invoice> findAllByUser_IdAndIssueDateBetween(Long userId, Date startDate, Date endDate);
 
+    List<Invoice> findAllByUser_Id(Long userId);
+
     @Query("SELECT i.status, COUNT(i) FROM Invoice i WHERE i.user.id = :userId GROUP BY i.status")
     List<Object[]> countInvoicesByStatusForUser(@Param("userId") Long userId);
+
+
+
 }

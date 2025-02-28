@@ -82,7 +82,9 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     public List<InvoiceVM> getAllInvoices() {
-        return invoiceRepository.findAll().stream()
+        User currentUser = getCurrentUser();
+        return invoiceRepository.findAllByUser_Id(currentUser.getId())
+                .stream()
                 .map(this::mapInvoiceWithPaymentPercentage)
                 .collect(Collectors.toList());
     }
