@@ -13,6 +13,7 @@ import java.util.List;
 public interface QuoteRepository extends JpaRepository<Quote, Long> {
     boolean existsByQuoteNumber(String quoteNumber);
     List<Quote> findAllByUser_IdAndIssueDateBetween(Long userId, Date startDate, Date endDate);
+    List<Quote> findAllByUser_Id(Long userId);
 
     @Query("SELECT q.status, COUNT(q) FROM Quote q WHERE q.user.id = :userId GROUP BY q.status")
     List<Object[]> countQuotesByStatusForUser(@Param("userId") Long userId);

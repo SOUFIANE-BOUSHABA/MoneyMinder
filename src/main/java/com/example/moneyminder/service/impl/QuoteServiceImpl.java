@@ -88,7 +88,9 @@ public class QuoteServiceImpl implements QuoteService {
 
     @Override
     public List<QuoteVM> getAllQuotes() {
-        return quoteRepository.findAll().stream()
+        User currentUser = getCurrentUser();
+        return quoteRepository.findAllByUser_Id(currentUser.getId())
+                .stream()
                 .map(this::mapQuoteWithPaymentPercentage)
                 .collect(Collectors.toList());
     }
