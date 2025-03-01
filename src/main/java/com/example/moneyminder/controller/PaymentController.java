@@ -41,4 +41,15 @@ public class PaymentController {
         paymentService.deletePayment(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<PaymentVM> updatePayment(@PathVariable Long id, @RequestBody PaymentRequest request) {
+        return ResponseEntity.ok(paymentService.updatePayment(id, request));
+    }
+
+
+    @GetMapping("/user")
+    public ResponseEntity<List<PaymentVM>> getPaymentsForCurrentUser() {
+        return ResponseEntity.ok(paymentService.getAllPaymentsForUser());
+    }
 }

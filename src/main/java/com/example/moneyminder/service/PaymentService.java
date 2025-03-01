@@ -8,6 +8,8 @@ import java.util.List;
 public interface PaymentService {
     PaymentVM createPayment(PaymentRequest request);
 
+    PaymentVM updatePayment(Long id, PaymentRequest request);
+
     List<PaymentVM> getPaymentsForInvoice(Long invoiceId);
 
     List<PaymentVM> getPaymentsForQuote(Long quoteId);
@@ -15,4 +17,6 @@ public interface PaymentService {
     PaymentVM getPaymentById(Long id);
 
     void deletePayment(Long id);
+
+    List<PaymentVM> getAllPaymentsForUser();
 }
