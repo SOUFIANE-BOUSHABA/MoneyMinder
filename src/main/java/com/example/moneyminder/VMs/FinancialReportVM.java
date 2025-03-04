@@ -16,5 +16,6 @@ public class FinancialReportVM {
     private Date generationDate;
     private ReportType reportType;
     private String filePath;
+    private Long fileSize;
     private Long userId;
 }

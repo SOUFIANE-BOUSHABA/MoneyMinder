@@ -8,7 +8,7 @@ import java.util.List;
 public interface FinancialReportService {
     FinancialReportVM generateFinancialReport(FinancialReportRequest request);
 
-    List<FinancialReportVM> getAllReportsForUser(Long userId);
+    List<FinancialReportVM> getAllReportsForUser();
 
     FinancialReportVM getReportById(Long id);
 

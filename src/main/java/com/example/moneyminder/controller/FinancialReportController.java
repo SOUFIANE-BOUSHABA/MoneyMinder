@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/reports")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')")
 public class FinancialReportController {
 
     private final FinancialReportService financialReportService;
@@ -26,9 +28,9 @@ public class FinancialReportController {
     }
 
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<FinancialReportVM>> getAllReportsForUser(@PathVariable Long userId) {
-        List<FinancialReportVM> reports = financialReportService.getAllReportsForUser(userId);
+    @GetMapping("/user")
+    public ResponseEntity<List<FinancialReportVM>> getAllReportsForUser() {
+        List<FinancialReportVM> reports = financialReportService.getAllReportsForUser();
         return ResponseEntity.ok(reports);
     }
 

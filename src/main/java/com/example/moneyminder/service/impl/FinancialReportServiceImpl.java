@@ -42,6 +42,9 @@ public class FinancialReportServiceImpl implements FinancialReportService {
     private final FinancialReportMapper reportMapper;
     private final EmailService emailService;
 
+
+
+
     @Override
     public FinancialReportVM generateFinancialReport(FinancialReportRequest request) {
         User currentUser = getCurrentUser();
@@ -57,13 +60,14 @@ public class FinancialReportServiceImpl implements FinancialReportService {
 
 
         String filePath = saveReportFile(pdfContent, reportTitle);
-
+        long fileSize = (long) pdfContent.length;
 
         FinancialReport report = FinancialReport.builder()
                 .title(reportTitle)
                 .generationDate(new Date())
                 .reportType(request.getReportType())
                 .filePath(filePath)
+                .fileSize(fileSize)
                 .user(currentUser)
                 .build();
 
@@ -104,8 +108,9 @@ public class FinancialReportServiceImpl implements FinancialReportService {
     }
 
     @Override
-    public List<FinancialReportVM> getAllReportsForUser(Long userId) {
-        return reportRepository.findAllByUserId(userId).stream()
+    public List<FinancialReportVM> getAllReportsForUser() {
+        User user = getCurrentUser();
+        return reportRepository.findAllByUserId(user.getId()).stream()
                 .map(reportMapper::toVM)
                 .collect(Collectors.toList());
     }

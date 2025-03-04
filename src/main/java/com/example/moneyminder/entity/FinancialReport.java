@@ -33,6 +33,8 @@ public class FinancialReport {
     @Column(nullable = false)
     private String filePath;
 
+    private Long fileSize;
+
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
