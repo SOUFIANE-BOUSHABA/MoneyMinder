@@ -12,7 +12,9 @@ import java.util.Date;
 public class SubscriptionVM {
     private Long id;
     private String planName;
+    private Double price;
     private SubscriptionStatus status;
     private Date startDate;
     private Date endDate;
+    private Date requestDate;
 }
