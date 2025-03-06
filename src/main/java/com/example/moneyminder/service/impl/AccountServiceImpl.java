@@ -3,10 +3,14 @@ package com.example.moneyminder.service.impl;
 import com.example.moneyminder.DTOs.AccountRequest;
 import com.example.moneyminder.VMs.AccountVM;
 import com.example.moneyminder.entity.Account;
+import com.example.moneyminder.entity.Subscription;
 import com.example.moneyminder.entity.User;
+import com.example.moneyminder.entity.enums.SubscriptionStatus;
+import com.example.moneyminder.exception.CustomException;
 import com.example.moneyminder.exception.ResourceNotFoundException;
 import com.example.moneyminder.mapper.AccountMapper;
 import com.example.moneyminder.repository.AccountRepository;
+import com.example.moneyminder.repository.SubscriptionRepository;
 import com.example.moneyminder.repository.UserRepository;
 import com.example.moneyminder.service.AccountService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +28,7 @@ public class AccountServiceImpl implements AccountService {
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
     private final AccountMapper accountMapper;
+    private final SubscriptionRepository subscriptionRepository;
 
 
     public User getCurrentUser() {
@@ -42,11 +47,24 @@ public class AccountServiceImpl implements AccountService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
+        List<Subscription> subscriptions = subscriptionRepository.findByUserId(userId).stream()
+                .filter(sub -> sub.getStatus() == SubscriptionStatus.ACTIVE)
+                .collect(Collectors.toList());
+        boolean isPremium = false;
+        if (!subscriptions.isEmpty()) {
+            isPremium = subscriptions.get(0).getSubscriptionPlan().getPrice() > 0;
+        }
+
+        List<Account> accounts = accountRepository.findAllByUserId(userId);
+        if (!isPremium && accounts.size() >= 2) {
+            throw new CustomException("Free plan allows a maximum of 2 accounts. Please upgrade to Premium for more accounts.");
+        }
+
         Account account = accountMapper.toEntity(request);
         account.setUser(user);
-
         return accountMapper.toVM(accountRepository.save(account));
     }
+
 
     @Override
     public AccountVM updateAccount(Long id, AccountRequest request) {
