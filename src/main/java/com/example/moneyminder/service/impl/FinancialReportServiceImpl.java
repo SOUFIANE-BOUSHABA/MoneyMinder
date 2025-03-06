@@ -2,19 +2,13 @@ package com.example.moneyminder.service.impl;
 
 import com.example.moneyminder.DTOs.FinancialReportRequest;
 import com.example.moneyminder.VMs.FinancialReportVM;
-import com.example.moneyminder.entity.FinancialReport;
-import com.example.moneyminder.entity.Invoice;
-import com.example.moneyminder.entity.Quote;
-import com.example.moneyminder.entity.Transaction;
-import com.example.moneyminder.entity.User;
+import com.example.moneyminder.entity.*;
 import com.example.moneyminder.entity.enums.ReportType;
+import com.example.moneyminder.entity.enums.SubscriptionStatus;
+import com.example.moneyminder.exception.CustomException;
 import com.example.moneyminder.exception.ResourceNotFoundException;
 import com.example.moneyminder.mapper.FinancialReportMapper;
-import com.example.moneyminder.repository.FinancialReportRepository;
-import com.example.moneyminder.repository.InvoiceRepository;
-import com.example.moneyminder.repository.QuoteRepository;
-import com.example.moneyminder.repository.TransactionRepository;
-import com.example.moneyminder.repository.UserRepository;
+import com.example.moneyminder.repository.*;
 import com.example.moneyminder.service.FinancialReportService;
 import com.example.moneyminder.utils.PdfGenerator;
 import jakarta.mail.MessagingException;
@@ -26,6 +20,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,6 +37,7 @@ public class FinancialReportServiceImpl implements FinancialReportService {
     private final TransactionRepository transactionRepository;
     private final FinancialReportMapper reportMapper;
     private final EmailService emailService;
+    private final SubscriptionRepository subscriptionRepository;
 
 
 
@@ -48,6 +45,13 @@ public class FinancialReportServiceImpl implements FinancialReportService {
     @Override
     public FinancialReportVM generateFinancialReport(FinancialReportRequest request) {
         User currentUser = getCurrentUser();
+
+
+        boolean isPremium = isUserPremium(currentUser.getId());
+
+        if (!isPremium) {
+            ensureFreePlanUnderLimit(currentUser.getId());
+        }
 
 
         List<Transaction> transactions = transactionRepository.findAllByUserIdAndDateBetween(  currentUser.getId(), request.getStartDate(), request.getEndDate());
@@ -76,6 +80,38 @@ public class FinancialReportServiceImpl implements FinancialReportService {
 
         return reportMapper.toVM(reportRepository.save(report));
     }
+
+
+
+
+    private void ensureFreePlanUnderLimit(Long userId) {
+        LocalDate now = LocalDate.now();
+        LocalDate startOfMonth = now.withDayOfMonth(1);
+        LocalDate endOfMonth = now.withDayOfMonth(now.lengthOfMonth());
+
+        Date startDate = Date.from(startOfMonth.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        Date endDate = Date.from(endOfMonth.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant());
+
+        List<FinancialReport> thisMonthReports = reportRepository.findAllByUserIdAndGenerationDateBetween(userId, startDate, endDate);
+        if (thisMonthReports.size() >= 3) {
+            throw new CustomException("You have reached your monthly limit for free plan. Please upgrade to Premium for unlimited report generation.");
+        }
+    }
+
+    private boolean isUserPremium(Long userId) {
+        List<Subscription> subscriptions = subscriptionRepository.findByUserId(userId).stream()
+                .filter(s -> s.getStatus() == SubscriptionStatus.ACTIVE)
+                .collect(Collectors.toList());
+        if (subscriptions.isEmpty()) {
+            return false;
+        }
+
+        Subscription sub = subscriptions.get(0);
+        return sub.getSubscriptionPlan().getPrice() > 0;
+    }
+
+
+
 
     private User getCurrentUser() {
         String email = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
