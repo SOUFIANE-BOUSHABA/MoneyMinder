@@ -6,7 +6,7 @@ spring:
     name: MoneyMinder
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/moneyminder
+    url: jdbc:postgresql://host.docker.internal:5433/moneyminder
     username: admin
     password: admin
     driver-class-name: org.postgresql.Driver
