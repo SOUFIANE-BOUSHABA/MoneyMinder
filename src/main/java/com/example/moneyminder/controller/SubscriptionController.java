@@ -38,18 +38,21 @@ public class SubscriptionController {
         return ResponseEntity.ok(subscriptions);
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @GetMapping("/pending")
     public ResponseEntity<List<SubscriptionVM>> getPendingSubscriptions() {
         List<SubscriptionVM> subscriptions = subscriptionService.getAllPendingSubscriptions();
         return ResponseEntity.ok(subscriptions);
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/approve/{id}")
     public ResponseEntity<SubscriptionVM> approveSubscription(@PathVariable Long id) {
         SubscriptionVM response = subscriptionService.approveSubscription(id);
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/reject/{id}")
     public ResponseEntity<SubscriptionVM> rejectSubscription(@PathVariable Long id) {
         SubscriptionVM response = subscriptionService.rejectSubscription(id);
