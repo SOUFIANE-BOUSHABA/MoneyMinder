@@ -183,7 +183,7 @@ public class AccountServiceImplTest {
     }
 
     @Test
-    public void testGetAllAccounts() {
+     void testGetAllAccounts() {
         List<Account> accounts = List.of(account);
         when(accountRepository.findAll()).thenReturn(accounts);
         when(accountMapper.toVM(account)).thenReturn(accountVM);
