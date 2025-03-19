@@ -1,0 +1,78 @@
+pipeline {
+    agent any
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+              
+                git branch: 'master', url: 'https://github.com/SOUFIANE-BOUSHABA/MoneyMinder'
+            }
+        }
+
+        stage('Maven Build') {
+            steps {
+                echo "=== Step 1: Build the JAR with tests & Jacoco ==="
+                sh '''
+                    mvn clean package jacoco:report
+                '''
+            }
+        }
+
+        stage('Sonar Analysis') {
+            steps {
+                echo "=== Step 2: Run SonarQube analysis ==="
+                sh '''
+                    sonar-scanner \
+                      -Dsonar.projectKey=moneyminder \
+                      -Dsonar.sources=src \
+                      -Dsonar.java.binaries=target/classes \
+                      -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+                      -Dsonar.host.url=http://host.docker.internal:9000 \
+                      -Dsonar.login=sqp_70410f16f3e487a87535395a4ed4df66bdedb0c2
+                '''
+            }
+        }
+
+        stage('Quality Gate Check') {
+            steps {
+                echo "=== Step 3: Wait for and check Quality Gate ==="
+                script {
+                   
+                    def status = sh(
+                        script: '''
+                            curl -s -u "sqp_70410f16f3e487a87535395a4ed4df66bdedb0c2:" \
+                              "http://host.docker.internal:9000/api/qualitygates/project_status?projectKey=moneyminder" \
+                              | jq -r '.projectStatus.status'
+                        ''',
+                        returnStdout: true
+                    ).trim()
+
+                    echo "SonarQube Quality Gate status: ${status}"
+                    if (status != "OK") {
+                        error "Quality Gate failed! Stopping pipeline."
+                    }
+                }
+            }
+        }
+
+        stage('Build & Run Docker Container') {
+            steps {
+                echo "=== Step 4: Docker build & run ==="
+                sh '''
+                    # Build Docker image
+                    docker build -t monyminder-dockiezed-app .
+
+                    # Stop & remove any previously running container
+                    docker stop monyminder-dockiezed-app-container || true
+                    docker rm monyminder-dockiezed-app-container || true
+
+                    # Run container on host port 9090 -> container port 8080
+                    docker run -d -p 9090:8080 --name monyminder-dockiezed-app-container monyminder-dockiezed-app
+
+                    echo "Deployment successful."
+                '''
+            }
+        }
+    }
+}
